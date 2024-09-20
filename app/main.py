@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-
+from fastapi.middleware.cors import CORSMiddleware
+from app.database.session import engine, Base
+from app.routers import admin, lecturers, courses, students
 
 app = FastAPI(
     title="LMS API",
@@ -8,6 +10,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Allow CORS for the frontend or other clients
+origins = [
+    "http://localhost:3000",  # frontend
+    "https://your-frontend-domain.com" # production domain address
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Database setup: Create all tables
+Base.metadata.create_all(bind=engine)
 
 html = """
 <!DOCTYPE html>
@@ -35,3 +53,9 @@ async def root():
     return html
 
 
+# Include the respective routers
+# app.include_router(auth.router, prefix="/v1/auth", tags=["Authentication"])
+app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
+app.include_router(lecturers.router, prefix="/api/v1", tags=["Lecturers"])
+app.include_router(students.router, prefix="/api/v1", tags=["Students"])
+app.include_router(courses.router, prefix="/api/v1", tags=["Course"])
