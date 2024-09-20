@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.user import Student
@@ -8,18 +9,18 @@ from sqlalchemy.exc import IntegrityError
 # Create Student
 def create_student(db: Session, student: StudentCreate):
     existing_student = db.query(Student).filter(
-        (Student.email == student.email) | (Student.reg_no == student.reg_no),
+        (Student.email == student.email) | (Student.student_reg_no == student.student_reg_no),
         Student.is_deleted == False
     ).first()
 
     if existing_student:
-        raise HTTPException(status_code=400, detail="Student with this email or registration number already exists.")
+        raise HTTPException(status_code=400, detail="Student with this email or regiUUIDation number already exists.")
 
     try:
         db_student = Student(
             full_name=student.full_name,
             email=student.email,
-            reg_no=student.reg_no,
+            student_reg_no=student.student_reg_no,
             password_hash=hash_password(student.password),
         )
         db.add(db_student)
@@ -31,19 +32,45 @@ def create_student(db: Session, student: StudentCreate):
         raise HTTPException(status_code=400, detail="Student creation failed due to integrity issues.")
 
 # Read Student by ID
-def get_student(db: Session, reg_no: str):
-    student = db.query(Student).filter(Student.reg_no == reg_no, Student.is_deleted == False).first()
+def get_student(db: Session, student_reg_no: UUID):
+    student = db.query(Student).filter(Student.id == student_reg_no, Student.is_deleted == False).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     return student
 
+
 # Read All Students
 def get_students(db: Session):
-    return db.query(Student).filter(Student.is_deleted == False).all()
+    db_all = db.query(Student).filter(Student.is_deleted == False).all()
+    if not db_all:
+        raise HTTPException(status_code=404, detail="No lecturers found")
+    return db_all
+
 
 # Update Student
-def update_student(db: Session, reg_no: str, student_update: StudentUpdate):
-    db_student = get_student(db, reg_no)
+def update_student(db: Session, student_reg_no: UUID, student_update: StudentUpdate):
+    db_admin = get_student(db, student_reg_no)
+    if not db_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    # Check for unique constraints
+    if student_update.email:
+        existing_lecturer = db.query(Student).filter(
+            Student.email == student_update.email,
+            Student.is_deleted == False
+        ).first()
+        if existing_lecturer and existing_lecturer.student_reg_no != student_reg_no:
+            raise HTTPException(status_code=400, detail="Email already in use by another Student.")
+
+    if student_update.student_reg_no:
+        existing_lecturer = db.query(Student).filter(
+            Student.student_reg_no == student_update.student_reg_no,
+            Student.is_deleted == False
+        ).first()
+        if existing_lecturer and existing_lecturer.student_reg_no != student_reg_no:
+            raise HTTPException(status_code=400, detail="Lecturer ID already in use by another Student.")
+
+    db_student = get_student(db, student_reg_no)
     if student_update.full_name:
         db_student.full_name = student_update.full_name
     if student_update.email:
@@ -56,8 +83,8 @@ def update_student(db: Session, reg_no: str, student_update: StudentUpdate):
     return db_student
 
 # Soft Delete Student
-def delete_student(db: Session, reg_no: str):
-    db_student = get_student(db, reg_no)
+def delete_student(db: Session, student_reg_no: UUID):
+    db_student = get_student(db, student_reg_no)
     db_student.is_deleted = True
     db.commit()
     return {"message": "Student successfully deleted"}

@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.user import Lecturer
@@ -31,18 +32,44 @@ def create_lecturer(db: Session, lecturer: LecturerCreate):
         raise HTTPException(status_code=400, detail="Lecturer creation failed due to integrity issues.")
 
 # Read Lecturer by ID
-def get_lecturer(db: Session, lecturer_id: str):
-    lecturer = db.query(Lecturer).filter(Lecturer.lecturer_id == lecturer_id, Lecturer.is_deleted == False).first()
+def get_lecturer(db: Session, lecturer_id: UUID):
+    lecturer = db.query(Lecturer).filter(Lecturer.id == lecturer_id, Lecturer.is_deleted == False).first()
     if not lecturer:
         raise HTTPException(status_code=404, detail="Lecturer not found")
     return lecturer
 
+
 # Read All Lecturers
 def get_lecturers(db: Session):
-    return db.query(Lecturer).filter(Lecturer.is_deleted == False).all()
+    db_all = db.query(Lecturer).filter(Lecturer.is_deleted == False).all()
+    if not db_all:
+        raise HTTPException(status_code=404, detail="No lecturers found")
+    return db_all
 
 # Update Lecturer
-def update_lecturer(db: Session, lecturer_id: str, lecturer_update: LecturerUpdate):
+def update_lecturer(db: Session, lecturer_id: UUID, lecturer_update: LecturerUpdate):
+    db_admin = get_lecturer(db, lecturer_id)
+    if not db_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    # Check for unique constraints
+    if lecturer_update.email:
+        existing_lecturer = db.query(Lecturer).filter(
+            Lecturer.email == lecturer_update.email,
+            Lecturer.is_deleted == False
+        ).first()
+        if existing_lecturer and existing_lecturer.lecturer_id != lecturer_id:
+            raise HTTPException(status_code=400, detail="Email already in use by another Lecturer.")
+
+    if lecturer_update.lecturer_id:
+        existing_lecturer = db.query(Lecturer).filter(
+            Lecturer.lecturer_id == lecturer_update.lecturer_id,
+            Lecturer.is_deleted == False
+        ).first()
+        if existing_lecturer and existing_lecturer.lecturer_id != lecturer_id:
+            raise HTTPException(status_code=400, detail="Lecturer ID already in use by another Lecturer.")
+
+
     db_lecturer = get_lecturer(db, lecturer_id)
     if lecturer_update.full_name:
         db_lecturer.full_name = lecturer_update.full_name

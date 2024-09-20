@@ -40,13 +40,33 @@ def get_admin(db: Session, admin_id: UUID):
 
 # Read All Admins
 def get_admins(db: Session):
-    return db.query(Admin).filter(Admin.is_deleted == False).all()
+    db_all = db.query(Admin).filter(Admin.is_deleted == False).all()
+    if not db_all:
+            raise HTTPException(status_code=404, detail="No Admins found")
+    return db_all
 
 # Update Admin
 def update_admin(db: Session, admin_id: UUID, admin_update: AdminUpdate):
     db_admin = get_admin(db, admin_id)
     if not db_admin:
         raise HTTPException(status_code=404, detail="Admin not found")
+    
+     # Check for unique constraints
+    if admin_update.email:
+        existing_Admin = db.query(Admin).filter(
+            Admin.email == admin_update.email,
+            Admin.is_deleted == False
+        ).first()
+        if existing_Admin and existing_Admin.admin_id != admin_id:
+            raise HTTPException(status_code=400, detail="Email already in use by another Admin.")
+
+    if admin_update.admin_id:
+        existing_Admin = db.query(Admin).filter(
+            Admin.admin_id == admin_update.admin_id,
+            Admin.is_deleted == False
+        ).first()
+        if existing_Admin and existing_Admin.admin_id != admin_id:
+            raise HTTPException(status_code=400, detail="Admin ID already in use by another Admin.")
     
     if admin_update.full_name:
         db_admin.full_name = admin_update.full_name

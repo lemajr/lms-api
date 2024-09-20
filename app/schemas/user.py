@@ -78,6 +78,17 @@ class LecturerResponse(LecturerBase):
             datetime: lambda dt: dt.isoformat()
         }
 
+# Schema for Lecturer update
+class LecturerUpdate(LecturerBase):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    lecturer_id: Optional[str] = None
+    password: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+        
+
 # Admin Base Schema
 class AdminBase(BaseModel):
     full_name: str
@@ -117,12 +128,3 @@ class AdminUpdate(AdminBase):
         from_attributes = True
 
 
-# Schema for Lecturer update
-class LecturerUpdate(LecturerBase):
-    full_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    lecturer_id: Optional[str] = None
-    password: Optional[str] = None
-
-    class Config:
-        from_attributes = True
