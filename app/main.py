@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.database.session import engine, Base
-from app.routers import admin, lecturers, courses, students
+from app.routers import admin, lecturers, courses, students, auth
 
 app = FastAPI(
     title="LMS API",
@@ -54,7 +54,7 @@ async def root():
 
 
 # Include the respective routers
-# app.include_router(auth.router, prefix="/v1/auth", tags=["Authentication"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
 app.include_router(lecturers.router, prefix="/api/v1", tags=["Lecturers"])
 app.include_router(students.router, prefix="/api/v1", tags=["Students"])
