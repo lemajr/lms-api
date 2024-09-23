@@ -29,7 +29,7 @@ def create_lecturer(db: Session, lecturer: LecturerCreate):
         return db_lecturer
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Lecturer creation failed due to integrity issues.")
+        raise HTTPException(status_code=400, detail="Lecturer with this email or lecturer ID already exists.")
 
 # Read Lecturer by ID
 def get_lecturer(db: Session, lecturer_id: UUID):

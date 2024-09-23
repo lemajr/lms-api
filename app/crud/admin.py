@@ -8,6 +8,7 @@ from app.schemas.user import AdminResponse
 from uuid import UUID
 
 def create_admin(db: Session, admin: AdminCreate):
+    # Check if admin with the same email or admin ID exists (excluding deleted ones)
     existing_admin = db.query(Admin).filter(
         (Admin.email == admin.email) | (Admin.admin_id == admin.admin_id),
         Admin.is_deleted == False
@@ -15,21 +16,27 @@ def create_admin(db: Session, admin: AdminCreate):
 
     if existing_admin:
         raise HTTPException(status_code=400, detail="Admin with this email or admin ID already exists.")
-    
+
+    # Create a new admin object
     db_admin = Admin(
         full_name=admin.full_name,
         email=admin.email,
         admin_id=admin.admin_id,
-        password_hash=hash_password(admin.password),
+        password_hash=hash_password(admin.password),  # Ensure secure hashing
     )
-    db.add(db_admin)
-    db.commit()
-    db.refresh(db_admin)
+
+    # Add to the database and commit the changes
+    try:
+        db.add(db_admin)
+        db.commit()
+        db.refresh(db_admin)
+    except IntegrityError as e:
+        db.rollback()  # Roll back the session in case of an error
+        raise HTTPException(status_code=400, detail="Admin with this email or admin ID already exists.")
 
     # Return the response using AdminResponse schema
     return AdminResponse.model_validate(db_admin)
 
-     
 
 # Read Admin by ID
 def get_admin(db: Session, admin_id: UUID):

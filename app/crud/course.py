@@ -28,7 +28,7 @@ def create_course(db: Session, course: CourseCreate):
         return db_course
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Course creation failed due to integrity issues.")
+        raise HTTPException(status_code=400, detail="Course with this course code already exists.")
 
 # Read Course by Code
 def get_course(db: Session, course_code: str):
