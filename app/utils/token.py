@@ -4,21 +4,35 @@ from jose import jwt, ExpiredSignatureError
 from app.core.config import settings
 from jwt.exceptions import InvalidTokenError
 from app.schemas.user import TokenData
+import pytz
 
- 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
+
+    # Get the current time in UTC
+    utc_time = datetime.now(timezone.utc)
+
+    # Set the timezone to East Africa
+    east_africa_timezone = pytz.timezone('Africa/Dar_es_Salaam')
+
+    # Convert the UTC time to East Africa time
+    utc_now = utc_time.astimezone(east_africa_timezone)
+    print(f'Starting Time before expire: {utc_now}')
+
+
+    # Calculate the expiration time based on the provided delta
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = utc_now + expires_delta
     else:
-        # Set token expiration
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        # Set token expiration to 30 minute from now
+        expire = utc_now + timedelta(minutes=30)
+    
     to_encode.update({"exp": expire})
-    print(f"Token will expire at: {expire}")
+    print(f"Token will expire at: {expire.strftime('%Y-%m-%d %H:%M:%S')}")
+    
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
-local_tz = pytz.timezone('Africa/Dar_es_Salaam')
-expire_time_local = expire_time_utc.astimezone(local_tz)
+
 
 def verify_token(token: str, credentials_exception):
     try:
