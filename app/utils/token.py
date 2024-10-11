@@ -38,9 +38,11 @@ def verify_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
+        role: str = payload.get("role")
+
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(username=username, role=role)
         return token_data
     except ExpiredSignatureError:
         raise HTTPException(
@@ -49,4 +51,4 @@ def verify_token(token: str, credentials_exception):
         )
     except InvalidTokenError:
         raise credentials_exception
-    
+

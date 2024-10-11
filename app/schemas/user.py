@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Union
 from uuid import UUID
 from datetime import datetime
 
@@ -140,3 +140,24 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+    role: Optional[str] = None 
+
+
+# Combined User Response schema that handles Student, Lecturer, and Admin
+class UserResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: EmailStr
+    role: str
+    created_at: datetime
+    updated_at: datetime
+    is_active: bool
+    is_deleted: bool
+    # Dynamically include either a StudentResponse, LecturerResponse, or AdminResponse
+    user_data: Optional[Union[StudentResponse, LecturerResponse, AdminResponse]] = None
+
+    class Config:
+        from_attributes = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat()
+        }
