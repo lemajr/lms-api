@@ -24,6 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
 # Database setup: Create all tables
 Base.metadata.create_all(bind=engine)
 

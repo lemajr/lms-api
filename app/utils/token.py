@@ -25,7 +25,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         expire = utc_now + expires_delta
     else:
         # Set token expiration to 30 minute from now
-        expire = utc_now + timedelta(minutes=30)
+        expire = utc_now + timedelta(minutes=2)
     
     to_encode.update({"exp": expire})
     print(f"Token will expire at: {expire.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -34,7 +34,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-def verify_token(token: str, credentials_exception):
+def verify_token(token: str, credentials_exception)->TokenData:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")

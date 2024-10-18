@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from app.utils import token
+from app.utils.token import verify_token, create_access_token
 from app.utils.dependency import get_db
 from app.core import security
 from app.models import user
@@ -58,11 +58,33 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
         identifier = has_access.admin_id
 
     # Create access token with the correct identifier and role
-    access_token = token.create_access_token(data={"sub": identifier, "role": role})
+    access_token = create_access_token(data={"sub": identifier, "role": role})
 
     return {"access_token": access_token, "token_type": "bearer", "role": role}
 
+# Renew the access token
+@router.post("/token/refresh")
+async def refresh_token(token_str: str = Depends(oauth2.oauth2_scheme)):
+    # Use the exception handling logic from get_current_user for consistency
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"}
+    )
 
+    # Verify the token and get token data
+    token_data = verify_token(token_str, credentials_exception)
+
+    # Create a new access token using the token data
+    new_access_token = create_access_token(
+        data={"sub": token_data.username, "role": token_data.role}
+    )
+
+    return {"access_token": new_access_token, "token_type": "bearer"}
+
+
+
+# user profile
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(db: Session = Depends(get_db), current_user: TokenData = Depends(oauth2.get_current_user)):
     print(f"Current User: {current_user}")
