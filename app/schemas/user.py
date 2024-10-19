@@ -43,6 +43,8 @@ class StudentResponse(StudentBase):
         json_encoders = {
             datetime: lambda dt: dt.isoformat()
         }
+    
+    
 
 # Schema for Student update
 class StudentUpdate(StudentBase):
@@ -140,8 +142,16 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
-    role: Optional[str] = None 
-
+    role: Optional[str] = None
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    student_reg_no: Optional[str] = None
+    id: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    is_deleted: Optional[bool] = None
+    is_active: Optional[bool] = None
+    courses: Optional[List[CourseResponse]] = None  # List of courses enrolled
 
 # Combined User Response schema that handles Student, Lecturer, and Admin
 class UserResponse(BaseModel):

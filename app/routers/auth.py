@@ -84,45 +84,45 @@ async def refresh_token(token_str: str = Depends(oauth2.oauth2_scheme)):
 
 
 
-# user profile
-@router.get("/me", response_model=UserResponse)
-def get_current_user_info(db: Session = Depends(get_db), current_user: TokenData = Depends(oauth2.get_current_user)):
-    print(f"Current User: {current_user}")
+# # user profile
+# @router.get("/me", response_model=UserResponse)
+# def get_current_user_info(db: Session = Depends(get_db), current_user: TokenData = Depends(oauth2.get_current_user)):
+#     print(f"Current User: {current_user}")
 
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+#     if not current_user:
+#         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    user_data = None
-    user_response_data = None
+#     user_data = None
+#     user_response_data = None
 
-    # Fetch user details based on their role
-    if current_user.role == "student":
-        user_data = db.query(user.Student).filter(user.Student.student_reg_no == current_user.username).first()
-        if user_data:
-            user_response_data = StudentResponse.model_validate(user_data)
-    elif current_user.role == "lecturer":
-        user_data = db.query(user.Lecturer).filter(user.Lecturer.lecturer_id == current_user.username).first()
-        if user_data:
-            user_response_data = LecturerResponse.model_validate(user_data)
-    elif current_user.role == "admin":
-        user_data = db.query(user.Admin).filter(user.Admin.admin_id == current_user.username).first()
-        if user_data:
-            user_response_data = AdminResponse.model_validate(user_data)
-    else:
-        raise HTTPException(status_code=400, detail="Invalid role")
+#     # Fetch user details based on their role
+#     if current_user.role == "student":
+#         user_data = db.query(user.Student).filter(user.Student.student_reg_no == current_user.username).first()
+#         if user_data:
+#             user_response_data = StudentResponse.model_validate(user_data)
+#     elif current_user.role == "lecturer":
+#         user_data = db.query(user.Lecturer).filter(user.Lecturer.lecturer_id == current_user.username).first()
+#         if user_data:
+#             user_response_data = LecturerResponse.model_validate(user_data)
+#     elif current_user.role == "admin":
+#         user_data = db.query(user.Admin).filter(user.Admin.admin_id == current_user.username).first()
+#         if user_data:
+#             user_response_data = AdminResponse.model_validate(user_data)
+#     else:
+#         raise HTTPException(status_code=400, detail="Invalid role")
 
-    if not user_data:
-        raise HTTPException(status_code=404, detail="User not found")
+#     if not user_data:
+#         raise HTTPException(status_code=404, detail="User not found")
 
-    # Use 'id' instead of 'uuid' here
-    return UserResponse(
-        id=user_data.id,  # Access the 'id' field instead of 'uuid'
-        full_name=user_data.full_name,
-        email=user_data.email,
-        role=current_user.role,
-        created_at=user_data.created_at,
-        updated_at=user_data.updated_at,
-        is_active=user_data.is_active,
-        is_deleted=user_data.is_deleted,
-        user_data=user_response_data  # Nested student, lecturer, or admin data
-    )
+#     # Use 'id' instead of 'uuid' here
+#     return UserResponse(
+#         id=user_data.id,  # Access the 'id' field instead of 'uuid'
+#         full_name=user_data.full_name,
+#         email=user_data.email,
+#         role=current_user.role,
+#         created_at=user_data.created_at,
+#         updated_at=user_data.updated_at,
+#         is_active=user_data.is_active,
+#         is_deleted=user_data.is_deleted,
+#         user_data=user_response_data  # Nested student, lecturer, or admin data
+#     )

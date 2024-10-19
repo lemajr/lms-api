@@ -1,10 +1,38 @@
 from uuid import UUID
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends,status
 from sqlalchemy.orm import Session
 from app.models.user import Student
-from app.schemas.user import StudentCreate, StudentUpdate
+from app.schemas.user import StudentCreate, StudentUpdate,TokenData
 from app.core.security import hash_password
 from sqlalchemy.exc import IntegrityError
+from app.utils.dependency import get_db
+from app.utils.oauth2 import oauth2_scheme  
+from app.utils.token import verify_token 
+
+# Get the current user from the database    
+def get_current_user(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme) 
+) -> Student:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    # Verify the token and extract user data
+    token_data = verify_token(token, credentials_exception)
+    
+    # Fetch the student using `student_reg_no` from token data
+    student = (
+        db.query(Student)
+        .filter(Student.student_reg_no == token_data.username, Student.is_deleted == False)
+        .first()
+    )
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return student
+
+
 
 # Create Student
 def create_student(db: Session, student: StudentCreate):

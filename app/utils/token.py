@@ -25,7 +25,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         expire = utc_now + expires_delta
     else:
         # Set token expiration to 30 minute from now
-        expire = utc_now + timedelta(minutes=2)
+        expire = utc_now + timedelta(minutes=30)
     
     to_encode.update({"exp": expire})
     print(f"Token will expire at: {expire.strftime('%Y-%m-%d %H:%M:%S')}")
