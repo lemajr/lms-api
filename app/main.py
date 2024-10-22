@@ -13,7 +13,8 @@ app = FastAPI(
 # Allow CORS for the frontend or other clients
 origins = [
     "http://localhost:3000",  # frontend
-    "https://your-frontend-domain.com" # production domain address
+    "http://localhost:3001",  # frontend
+    "https://frontend-domain.com" # production domain address
 ]
 
 app.add_middleware(

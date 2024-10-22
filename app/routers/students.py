@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from app.schemas.user import StudentCreate, StudentUpdate, StudentResponse
 from app.schemas.course import CourseResponse
@@ -37,7 +37,7 @@ def get_current_student_me(
 #     return get_student_courses(db, current_student.reg_no)
 
 # Create Student
-@router.post("/student/", response_model=StudentResponse)
+@router.post("/student/", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
 def create_student_route(student: StudentCreate, db: Session = Depends(get_db), get_current_user: StudentResponse = Depends(oauth2.get_current_user)):
     return create_student(db, student)
 
@@ -57,6 +57,6 @@ def update_student_route(reg_no: str, student: StudentUpdate, db: Session = Depe
     return update_student(db, reg_no, student)
 
 # Delete Student (Soft Delete)
-@router.delete("/student/{reg_no}")
+@router.delete("/student/{reg_no}", status_code=status.HTTP_200_OK)
 def delete_student_route(reg_no: str, db: Session = Depends(get_db), get_current_user: StudentResponse = Depends(oauth2.get_current_user)):
     return delete_student(db, reg_no)
