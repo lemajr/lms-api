@@ -1,10 +1,37 @@
 from uuid import UUID
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from app.models.user import Lecturer
 from app.schemas.user import LecturerCreate, LecturerUpdate
 from app.core.security import hash_password
 from sqlalchemy.exc import IntegrityError
+from app.utils.dependency import get_db
+from app.utils.oauth2 import oauth2_scheme  
+from app.utils.token import verify_token 
+
+# Get the current user from the database    
+def get_current_lecturer(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme) 
+) -> Lecturer:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    # Verify the token and extract user data
+    token_data = verify_token(token, credentials_exception)
+    
+    # Fetch the Lecturer using `Lecturer_reg_no` from token data
+    lecturer = (
+        db.query(Lecturer)
+        .filter(Lecturer.lecturer_id == token_data.username, Lecturer.is_deleted == False)
+        .first()
+    )
+    if not lecturer:
+        raise HTTPException(status_code=404, detail="Lecturer not found")
+    return lecturer
+
 
 # Create Lecturer
 def create_lecturer(db: Session, lecturer: LecturerCreate):

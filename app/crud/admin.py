@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from app.models.user import Admin
 from app.schemas.user import AdminCreate, AdminUpdate
@@ -6,6 +6,33 @@ from app.core.security import hash_password
 from sqlalchemy.exc import IntegrityError
 from app.schemas.user import AdminResponse
 from uuid import UUID
+from app.utils.dependency import get_db
+from app.utils.oauth2 import oauth2_scheme  
+from app.utils.token import verify_token 
+
+# Get the current admin from the database    
+def get_current_admin(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme) 
+) -> Admin:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    # Verify the token and extract user data
+    token_data = verify_token(token, credentials_exception)
+    
+    # Fetch the admin using `admin_reg_no` from token data
+    admin = (
+        db.query(Admin)
+        .filter(Admin.admin_id == token_data.username, Admin.is_deleted == False)
+        .first()
+    )
+    if not admin:
+        raise HTTPException(status_code=404, detail="admin not found")
+    return admin
+
 
 def create_admin(db: Session, admin: AdminCreate):
     # Check if admin with the same email or admin ID exists (excluding deleted ones)

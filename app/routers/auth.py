@@ -9,59 +9,48 @@ from app.utils import oauth2
 
 router = APIRouter()
 
-# Student login
+# General login endpoint for any role
 @router.post('/login')
-def student_login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user_to_authenticate = None
+    role = None
+
     # Check if the user is a student
     student = db.query(user.Student).filter(
         user.Student.student_reg_no == request.username, 
         user.Student.is_active
     ).first()
 
-    if not student:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Student not found or inactive"
-        )
-    
-    # Verify the password
-    if not security.verify_password(request.password, student.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Incorrect password"
-        )
-
-    # Create access token for the student
-    access_token = create_access_token(data={"sub": student.student_reg_no, "role": "student"})
-
-    return {"access_token": access_token, "token_type": "bearer", "role": "student"}
-
-
-# Staff login for lecturers and admins
-@router.post('/staff-login')
-def staff_login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # Check if the user is a lecturer
-    lecturer = db.query(user.Lecturer).filter(
-        user.Lecturer.lecturer_id == request.username, 
-        user.Lecturer.is_active
-    ).first()
-
-    # If not a lecturer, check if it's an admin
-    if not lecturer:
-        admin = db.query(user.Admin).filter(
-            user.Admin.admin_id == request.username, 
-            user.Admin.is_active
-        ).first()
-        if not admin:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, 
-                detail="Lecturer or Admin not found or inactive"
-            )
-        user_to_authenticate = admin
-        role = "admin"
+    if student:
+        user_to_authenticate = student
+        role = "student"
     else:
-        user_to_authenticate = lecturer
-        role = "lecturer"
+        # Check if the user is a lecturer
+        lecturer = db.query(user.Lecturer).filter(
+            user.Lecturer.lecturer_id == request.username, 
+            user.Lecturer.is_active
+        ).first()
+        
+        if lecturer:
+            user_to_authenticate = lecturer
+            role = "lecturer"
+        else:
+            # Check if the user is an admin
+            admin = db.query(user.Admin).filter(
+                user.Admin.admin_id == request.username, 
+                user.Admin.is_active
+            ).first()
+            
+            if admin:
+                user_to_authenticate = admin
+                role = "admin"
+
+    # If no user was found, raise an authentication error
+    if not user_to_authenticate:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="User not found or inactive"
+        )
 
     # Verify the password
     if not security.verify_password(request.password, user_to_authenticate.password_hash):
@@ -70,11 +59,13 @@ def staff_login(request: OAuth2PasswordRequestForm = Depends(), db: Session = De
             detail="Incorrect password"
         )
 
-    # Create access token for the staff member
-    access_token = create_access_token(data={"sub": user_to_authenticate.lecturer_id if role == "lecturer" else user_to_authenticate.admin_id, "role": role})
+    # Create access token with role information
+    access_token = create_access_token(data={
+        "sub": request.username, 
+        "role": role
+    })
 
     return {"access_token": access_token, "token_type": "bearer", "role": role}
-
 
 # Renew the access token
 @router.post("/token/refresh")

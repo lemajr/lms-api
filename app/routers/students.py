@@ -25,7 +25,7 @@ def get_current_student_me(
         updated_at=current_student.updated_at,
         is_deleted=current_student.is_deleted,
         is_active=current_student.is_active,
-        courses=current_student.courses  # Assuming courses is a relationship
+        courses=current_student.courses  # courses is a relationship
     )
     
 # Get current student's courses
