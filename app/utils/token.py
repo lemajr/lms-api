@@ -25,7 +25,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         expire = utc_now + expires_delta
     else:
         # Set token expiration to 30 minute from now
-        expire = utc_now + timedelta(minutes=30)
+        expire = utc_now + timedelta(minutes=3)
     
     to_encode.update({"exp": expire})
     print(f"Token will expire at: {expire.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -37,6 +37,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 def verify_token(token: str, credentials_exception)->TokenData:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        print("Token Payload:", payload)
+
         username: str = payload.get("sub")
         role: str = payload.get("role")
 
@@ -45,6 +47,7 @@ def verify_token(token: str, credentials_exception)->TokenData:
         token_data = TokenData(username=username, role=role)
         return token_data
     except ExpiredSignatureError:
+        print("Token has expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired. Please login again."

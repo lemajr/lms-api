@@ -70,6 +70,8 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
 # Renew the access token
 @router.post("/token/refresh")
 async def refresh_token(token_str: str = Depends(oauth2.oauth2_scheme)):
+    print("Received Token:", token_str)  # Debug: Check if token is passed correctly
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
