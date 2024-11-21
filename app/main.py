@@ -15,6 +15,7 @@ origins = [
     "http://localhost:3000",  # frontend
     "http://localhost:3001",  # frontend
     "https://frontend-domain.com" # production domain address
+    "https://lms-frontend-seven-pi.vercel.app"
 ]
 
 app.add_middleware(
