@@ -13,4 +13,4 @@ class Settings(BaseSettings):
 
 settings = Settings()  
 
-settings.DATABASE_URL="postgresql://lemajr:lemajr@localhost:5432/lms_db"
+Settings.DATABASE_URL="postgresql://neondb_owner:WjPvXaecO0k3@ep-shy-sun-a6njkfhz.us-west-2.aws.neon.tech/neondb?sslmode=require"
